@@ -7,7 +7,7 @@ LCD::LCD(int address, int backlightOn) : addr(address), backlight(backlightOn) {
         exit(1);
     }
     initialize();
-    loadCustomChars(); // Lade benutzerdefinierte Zeichen wie ß
+    loadCustomChars();
 }
 
 void LCD::writeByte(uint8_t data) {
@@ -63,27 +63,16 @@ void LCD::print(const std::string &text) {
     }
 }
 
-void LCD::scrollText(const std::string &text, int row, int delayMs, int lcdWidth) {
-    std::string paddedText = text + " "; // Platz für nahtlosen Übergang
-    size_t totalLength = paddedText.size();
-    for (size_t i = 0; i < totalLength + lcdWidth; ++i) {
-        std::string window;
-        if (i < totalLength) {
-            window = paddedText.substr(i, lcdWidth);
-        } else {
-            // Übergang am Ende des Textes
-            size_t overflow = i - totalLength;
-            window = paddedText.substr(overflow, lcdWidth - overflow);
-            window += paddedText.substr(0, overflow);
-        }
-
-        setCursor(row, 0);
-        print(window);
-
-        usleep(delayMs * 1000);
+void LCD::scrollTextStep(const std::string &text, int row, int step, int lcdWidth) {
+    std::string paddedText = text + " ";
+    size_t pos = step % paddedText.size();
+    std::string window = paddedText.substr(pos, lcdWidth);
+    if (window.size() < lcdWidth) {
+        window += paddedText.substr(0, lcdWidth - window.size());
     }
+    setCursor(row, 0);
+    print(window);
 }
-
 
 void LCD::createCustomChar(int location, uint8_t charmap[]) {
     location &= 0x7;
@@ -104,5 +93,5 @@ void LCD::loadCustomChars() {
         0b01110,
         0b00000
     };
-    createCustomChar(0, ssChar); // Speichert `ß` in CGRAM-Slot 0
+    createCustomChar(0, ssChar);
 }

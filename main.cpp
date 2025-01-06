@@ -6,34 +6,27 @@ private:
 
 public:
     MainApplication(int lcdAddress) : lcd(lcdAddress) {}
-void run() {
-    lcd.clear();
 
-    // Zeile 0 scrollen
-    lcd.scrollText("This is a example text", 0, 900, 20);
+    void run() {
+        lcd.clear();
 
-    // Zeile 1 bleibt statisch
-    lcd.setCursor(1, 0);
-    lcd.print("Huminity: ");
+        std::string line1 = "This is line 1 scrolling.";
+        std::string line2 = "Line 2 is scrolling too.";
+        std::string line3 = "Scrolling on line 3 works!";
+        std::string line4 = "Finally, line 4 scrolls!";
 
-    // Zeile 2 bleibt statisch
-    lcd.setCursor(2, 0);
-    lcd.print("Temperature: ");
+        int step = 0;
 
-    // Zeile 3 scrollen
-    lcd.scrollText("Queer Connect 2025-01-15", 3, 900, 20);
-}
+        while (true) { // Endlosschleife für kontinuierliches Scrollen
+            lcd.scrollTextStep(line1, 0, step, 20);
+            lcd.scrollTextStep(line2, 1, step, 20);
+            lcd.scrollTextStep(line3, 2, step, 20);
+            lcd.scrollTextStep(line4, 3, step, 20);
 
-    // lcd.print("Testing the first line."); // Benutzerdefiniertes ß
-    //std::string line1 = "This is a example text.";
-	//std::string line2 = "Malzbier";
-	//std::string line3 = "Budweiser";
-	//std::string line4 = "Queer Connect 2025-01-15";
-    //lcd.scrollText(line1, 0, 900, 20); // Scroll in Zeile 1
-	//lcd.scrollText(line2, 1, 900, 20);
-	//lcd.scrollText(line3, 2, 900, 20);
-	//lcd.scrollText(line4, 3, 900, 20);
-    
+            step++; // Nächster Scroll-Schritt
+            usleep(300000); // 300 ms Verzögerung
+        }
+    }
 };
 
 int main() {

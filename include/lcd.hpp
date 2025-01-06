@@ -16,7 +16,6 @@ private:
     void toggleEnable(uint8_t data);
     void sendCommand(uint8_t cmd);
     void sendData(uint8_t data);
-
     void createCustomChar(int location, uint8_t charmap[]);
 
 public:
@@ -25,7 +24,10 @@ public:
     void clear();
     void setCursor(int row, int col);
     void print(const std::string &text);
-    void scrollText(const std::string &text, int row, int delayMs, int lcdWidth);
+
+    // Neue Methode für nicht-blockierenden Scroll
+    void scrollTextStep(const std::string &text, int row, int step, int lcdWidth);
+
     void loadCustomChars();
 };
 
