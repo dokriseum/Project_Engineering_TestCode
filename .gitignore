@@ -1,3 +1,8 @@
+.out
+*.out
+./*.out
+main.out
+
 # Ignoriere den Ordner "exclude" und seinen gesamten Inhalt
 exclude/
 
