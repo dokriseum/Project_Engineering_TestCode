@@ -127,9 +127,13 @@ int main() {
 
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Grüße von ä, ö, ü");
+    lcd.print("8989898989898989898");
     lcd.setCursor(1, 0);
-    lcd.print("Und ß ist dabei!");
+    lcd.print("8989898989898989898");
+    lcd.setCursor(2, 0);
+    lcd.print("8989898989898989898");
+    lcd.setCursor(3, 0);
+    lcd.print("8989898989898989898");
 
     return 0;
 }

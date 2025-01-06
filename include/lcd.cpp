@@ -64,20 +64,26 @@ void LCD::print(const std::string &text) {
 }
 
 void LCD::scrollText(const std::string &text, int row, int delayMs, int lcdWidth) {
-    std::string paddedText = text + " ";
-    for (size_t i = 0; i < paddedText.size(); i++) {
-        std::string window = paddedText.substr(i, lcdWidth);
-        if (window.size() < lcdWidth) {
-            window += paddedText.substr(0, lcdWidth - window.size());
+    std::string paddedText = text + " "; // Platz für nahtlosen Übergang
+    size_t totalLength = paddedText.size();
+    for (size_t i = 0; i < totalLength + lcdWidth; ++i) {
+        std::string window;
+        if (i < totalLength) {
+            window = paddedText.substr(i, lcdWidth);
+        } else {
+            // Übergang am Ende des Textes
+            size_t overflow = i - totalLength;
+            window = paddedText.substr(overflow, lcdWidth - overflow);
+            window += paddedText.substr(0, overflow);
         }
+
         setCursor(row, 0);
         print(window);
+
         usleep(delayMs * 1000);
-        if (i == paddedText.size() - 1) {
-            i = -1; // Zurück zum Anfang
-        }
     }
 }
+
 
 void LCD::createCustomChar(int location, uint8_t charmap[]) {
     location &= 0x7;
