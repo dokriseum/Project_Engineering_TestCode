@@ -1,0 +1,63 @@
+# Ignoriere den Ordner "exclude" und seinen gesamten Inhalt
+exclude/
+
+# C/C++ Build-Dateien
+*.o          # Objektdateien
+*.a          # Archivdateien
+*.so         # Shared Objects (Linux)
+*.dylib      # Dynamische Bibliotheken (macOS)
+*.dll        # Dynamische Bibliotheken (Windows)
+*.exe        # Ausführbare Dateien (Windows)
+*.out        # Ausführbare Dateien (Linux/macOS)
+*.app        # macOS App-Bundles
+*.pdb        # Debug-Informationen (Windows)
+*.ilk        # Debug-Informationen (Windows)
+*.obj        # Objektdateien (Windows)
+*.lib        # Bibliotheken (Windows)
+
+# C/C++ Debug-Dateien
+*.d          # Abhängigkeiten
+*.gcno       # Coverage-Dateien
+*.gcda       # Coverage-Dateien
+*.gcov       # Coverage-Berichte
+*.profraw    # Profilierungsdaten
+*.profdata   # Profilierungsdaten
+
+# IDE- und Editor-spezifische Dateien
+.vscode/     # Visual Studio Code
+.idea/       # JetBrains IDEs
+*.suo        # Visual Studio
+*.user       # Visual Studio
+*.ncb        # Visual Studio
+*.aps        # Visual Studio
+*.opt        # Visual Studio
+*.log        # Logs
+*.swp        # vi/vim Swap-Dateien
+*.bak        # Backup-Dateien
+*.tmp        # Temporäre Dateien
+
+# Automake/Autoconf Dateien
+*.lo
+*.la
+*.al
+*.m4
+aclocal.m4
+autom4te.cache/
+config.log
+config.status
+Makefile
+Makefile.in
+
+# CMake Build-Verzeichnisse
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+build/
+
+# Sonstige temporäre Dateien
+*.DS_Store    # macOS system files
+*.Thumbs.db   # Windows system files
+
+# Git-spezifische Dateien
+exclude/**/.git

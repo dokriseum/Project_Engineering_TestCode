@@ -1,0 +1,12 @@
+Counter: 1/127  |  Soil Moisture Value: 78  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 2/127  |  Soil Moisture Value: 78  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 3/127  |  Soil Moisture Value: 5  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 4/127  |  Soil Moisture Value: 7  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 5/127  |  Soil Moisture Value: 84  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 6/127  |  Soil Moisture Value: 784  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 7/127  |  Soil Moisture Value: 786  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 8/127  |  Soil Moisture Value: 78  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 1/127  |  Soil Moisture Value: 784  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 2/127  |  Soil Moisture Value: 7  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 3/127  |  Soil Moisture Value: 83  |  Air Humidity: 60%  |  Temperature: 25°C
+Counter: 4/127  |  Soil Moisture Value: 782  |  Air Humidity: 60%  |  Temperature: 25°C
