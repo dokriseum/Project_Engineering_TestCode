@@ -170,7 +170,7 @@ int main() {
             checkZahler();
 
             // Pause
-            usleep(VALUE_REFRESH * 1000); // in Millisekunden
+            usleep(VALUE_REFRESH * 10000); // in Millisekunden
         }
     } catch (...) {
         std::cerr << "Programm beendet." << std::endl;
