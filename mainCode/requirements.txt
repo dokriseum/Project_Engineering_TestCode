@@ -1,0 +1,5 @@
+RPi.GPIO
+adafruit-circuitpython-dht
+adafruit-blinka
+pyserial
+RPLCD

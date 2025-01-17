@@ -1,3 +1,4 @@
+exclude/
 .out
 *.out
 ./*.out
