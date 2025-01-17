@@ -15,7 +15,7 @@ SOIL_MOISTURE_THRESHOLD = 30  # Bodenfeuchtigkeit in Prozent
 HUMIDITY_THRESHOLD = 70       # Luftfeuchtigkeit in Prozent
 
 # Sensor initialisieren (DHT22 am GPIO4)
-dht_device = adafruit_dht.DHT22(board.D4)
+dht_device = adafruit_dht.DHT22(board.D18)
 
 # Serielle Verbindung zum Arduino herstellen
 arduino_serial = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
