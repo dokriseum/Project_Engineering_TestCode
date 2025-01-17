@@ -2,7 +2,7 @@ from RPLCD.i2c import CharLCD
 from time import sleep
 
 # LCD-Parameter
-I2C_ADDRESS = 0x27  # Ersetze 0x27 durch die Adresse deines LCDs (z.B. aus i2cdetect -y 1)
+I2C_ADDRESS = 0x27  # Ersetze 0x27 mit der Adresse deines LCDs
 LCD_ROWS = 4        # Anzahl der Reihen
 LCD_COLS = 20       # Anzahl der Spalten
 
@@ -13,23 +13,20 @@ try:
     # LCD löschen
     lcd.clear()
 
-    # Begrüßungstext anzeigen
-    lcd.write_string("LCD-Test\n")
-    lcd.write_string("Zeile 2\n")
-    lcd.write_string("Zeile 3\n")
-    lcd.write_string("Zeile 4")
-    
-    sleep(5)  # Warte 5 Sekunden
+    # Text gezielt in einzelne Zeilen schreiben
+    lcd.cursor_pos = (0, 0)  # Erste Zeile, erste Spalte
+    lcd.write_string("Zeile 1: Hallo Welt")
 
-    # Weitere Tests: Dynamisches Schreiben
-    for i in range(1, 5):
-        lcd.clear()
-        lcd.write_string(f"Zeile {i}: Test")
-        sleep(2)
+    lcd.cursor_pos = (1, 0)  # Zweite Zeile, erste Spalte
+    lcd.write_string("Zeile 2: Test")
 
-    lcd.clear()
-    lcd.write_string("Test abgeschlossen")
-    sleep(3)
+    lcd.cursor_pos = (2, 5)  # Dritte Zeile, sechste Spalte
+    lcd.write_string("Zeile 3: Mitte")
+
+    lcd.cursor_pos = (3, 10)  # Vierte Zeile, elfte Spalte
+    lcd.write_string("Zeile 4: Rechts")
+
+    sleep(5)  # Warte 5 Sekunden, damit der Text sichtbar bleibt
 
 finally:
     # LCD zurücksetzen
