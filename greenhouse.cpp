@@ -10,7 +10,7 @@
 
 // Pin-Definitionen
 #define LED_PIN 0           // GPIO 17 = WiringPi 0
-#define DHT_PIN 10           // GPIO 4 = WiringPi 7 (angepasst für DHT)
+#define DHT_PIN 7           // GPIO 4 = WiringPi 7 (angepasst für DHT)
 
 // Schwellwerte
 #define VALUE_REFRESH 256   // Zeit in Millisekunden
