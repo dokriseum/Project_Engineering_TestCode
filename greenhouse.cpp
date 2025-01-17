@@ -23,7 +23,7 @@ const char* serialPort = "/dev/ttyACM0"; // Pfad zur seriellen Schnittstelle
 int fd; // Datei-Deskriptor für die serielle Verbindung
 std::string serialBuffer; // Puffer für serielle Daten
 
-DHT dht(DHT_PIN, DHT22); // Instanz für den DHT-Sensor
+DHT dht(DHT_PIN, DHT11); // Instanz für den DHT-Sensor
 
 // Funktionen
 void checkZahler() {
@@ -41,18 +41,24 @@ void printSerial(int soilValue, float humidity, float temperature) {
 }
 
 void readTempAirHumidity(float &humidity, float &temperature) {
-    float temp = dht.readTemperature();
-    float hum = dht.readHumidity();
+  bool result = dht.read();
+  if (!result) {
+    std::cerr << "Fehler: DHT-Sensor antwortet nicht!" << std::endl;
+  }
 
-    if (std::isnan(temp) || std::isnan(hum)) {
-        std::cerr << "Fehler beim Lesen des DHT-Sensors." << std::endl;
-        humidity = -1.0; // Fehlerwert
-        temperature = -1.0; // Fehlerwert
-    } else {
-        humidity = hum;
-        temperature = temp;
-    }
+  float temp = dht.readTemperature();
+  float hum = dht.readHumidity();
+  
+  if (std::isnan(temp) || std::isnan(hum)) {
+    std::cerr << "Fehler: Sensor konnte nicht gelesen werden!" << std::endl;
+    humidity = -1.0;
+    temperature = -1.0;
+  } else {
+    humidity = hum;
+    temperature = temp;
+  }
 }
+
 
 int readSoilValueFromSerial() {
   char buffer[256];
