@@ -55,38 +55,44 @@ void readTempAirHumidity(float &humidity, float &temperature) {
 }
 
 int readSoilValueFromSerial() {
-    char buffer[256];
-    memset(buffer, 0, sizeof(buffer));
-
-    int n = read(fd, &buffer, sizeof(buffer) - 1);
-    if (n > 0) {
-        serialBuffer.append(buffer, n);
-
-        // Verarbeite vollständige Zeilen
-        size_t pos;
-        while ((pos = serialBuffer.find('\n')) != std::string::npos) {
-            std::string line = serialBuffer.substr(0, pos);
-            serialBuffer.erase(0, pos + 1);
-
-            // Entferne Carriage Return, falls vorhanden
-            line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-
-            try {
-                int value = std::stoi(line);
-
-                // Validierungscheck für den Sensorwert
-                if (value >= MIN_SOIL_VALUE && value <= MAX_SOIL_VALUE) {
-                    return value;
-                } else {
-                    std::cerr << "Ungültiger Wert außerhalb des Bereichs: " << value << std::endl;
-                }
-            } catch (const std::exception &e) {
-                std::cerr << "Fehler beim Konvertieren des Werts: " << e.what() << " (Empfangen: " << line << ")" << std::endl;
-            }
+  char buffer[256];
+  memset(buffer, 0, sizeof(buffer));
+  
+  int n = read(fd, &buffer, sizeof(buffer) - 1);
+  if (n > 0) {
+    serialBuffer.append(buffer, n);
+    
+    // Verarbeite vollständige Zeilen
+    size_t pos;
+    while ((pos = serialBuffer.find('\n')) != std::string::npos) {
+      std::string line = serialBuffer.substr(0, pos);
+      serialBuffer.erase(0, pos + 1);
+      
+      // Entferne Carriage Return, falls vorhanden
+      line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+      
+      // Ignoriere leere oder ungültige Zeilen
+      if (line.empty() || line.find_first_not_of("0123456789") != std::string::npos) {
+        std::cerr << "Ungültige Eingabe empfangen: " << line << std::endl;
+        continue;
+      }
+      
+      try {
+        int value = std::stoi(line);
+        
+        // Validierungscheck für den Sensorwert
+        if (value >= MIN_SOIL_VALUE && value <= MAX_SOIL_VALUE) {
+          return value;
+        } else {
+          std::cerr << "Ungültiger Wert außerhalb des Bereichs: " << value << std::endl;
         }
+      } catch (const std::exception &e) {
+        std::cerr << "Fehler beim Konvertieren des Werts: " << e.what() << " (Empfangen: " << line << ")" << std::endl;
+      }
     }
-
-    return -1; // Fehlerwert
+  }
+  
+  return -1; // Fehlerwert
 }
 
 void setupSerialConnection() {
