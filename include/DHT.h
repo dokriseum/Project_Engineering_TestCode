@@ -1,24 +1,9 @@
-/*!
- *  @file DHT.h
- *
- *  This is a library for DHT series of low cost temperature/humidity sensors.
- *
- *  You must have Adafruit Unified Sensor Library library installed to use this
- * class.
- *
- *  Adafruit invests time and resources providing this open source code,
- *  please support Adafruit andopen-source hardware by purchasing products
- *  from Adafruit!
- *
- *  Written by Adafruit Industries.
- *
- *  MIT license, all text above must be included in any redistribution
- */
-
 #ifndef DHT_H
 #define DHT_H
 
-#include "Arduino.h"
+#include <unistd.h>
+#include <stdint.h>
+#include <math.h>
 
 /* Uncomment to enable printing out nice debug messages. */
 //#define DHT_DEBUG
@@ -42,7 +27,7 @@
 
 /* Define types of sensors. */
 static const uint8_t DHT11{11};  /**< DHT TYPE 11 */
-static const uint8_t DHT12{12};  /**< DHY TYPE 12 */
+static const uint8_t DHT12{12};  /**< DHT TYPE 12 */
 static const uint8_t DHT21{21};  /**< DHT TYPE 21 */
 static const uint8_t DHT22{22};  /**< DHT TYPE 22 */
 static const uint8_t AM2301{21}; /**< AM2301 */
@@ -57,8 +42,8 @@ static const uint8_t AM2301{21}; /**< AM2301 */
 #endif
 #endif
 
-/*!
- *  @brief  Class that stores state and functions for DHT
+/*
+ *  Class that stores state and functions for DHT
  */
 class DHT {
 public:
@@ -89,19 +74,19 @@ private:
   uint32_t expectPulse(bool level);
 };
 
-/*!
- *  @brief  Class that defines Interrupt Lock Avaiability
+/*
+ *  Class that defines Interrupt Lock Availability
  */
 class InterruptLock {
 public:
   InterruptLock() {
 #if !defined(ARDUINO_ARCH_NRF52)
-    noInterrupts();
+    // No operation needed for Raspberry Pi
 #endif
   }
   ~InterruptLock() {
 #if !defined(ARDUINO_ARCH_NRF52)
-    interrupts();
+    // No operation needed for Raspberry Pi
 #endif
   }
 };
