@@ -23,7 +23,7 @@ const char* serialPort = "/dev/ttyACM0"; // Pfad zur seriellen Schnittstelle
 int fd; // Datei-Deskriptor für die serielle Verbindung
 std::string serialBuffer; // Puffer für serielle Daten
 
-DHT dht(DHT_PIN, DHT11); // Instanz für den DHT-Sensor
+DHT dht(DHT_PIN, DHT22); // Instanz für den DHT-Sensor
 
 // Funktionen
 void checkZahler() {
