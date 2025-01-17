@@ -37,7 +37,7 @@ def read_dht22_data():
             print(f"Luftfeuchtigkeit: {humidity:.2f}%")
 
             # Lüftersteuerung basierend auf Luftfeuchtigkeit
-            if humidity > HUMIDITY_THRESHOLD:
+            if humidity < HUMIDITY_THRESHOLD:
                 print("Luftfeuchtigkeit zu hoch. Lüfter werden aktiviert.")
                 GPIO.output(RELAY_FAN_1, GPIO.LOW)  # Lüfter 1 einschalten
                 GPIO.output(RELAY_FAN_2, GPIO.LOW)  # Lüfter 2 einschalten
