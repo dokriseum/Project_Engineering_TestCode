@@ -1,40 +1,39 @@
-#include <wiringPi.h>
+#include <pigpio.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #define MAX_TIMINGS 85
-#define DHT_PIN 4  // GPIO4 (WiringPi Pin)
+#define DHT_PIN 4  // GPIO-Pin für den DHT22
 
 int data[5] = {0, 0, 0, 0, 0};
 
 void read_dht22_data() {
-    uint8_t laststate = HIGH;
+    uint8_t laststate = PI_HIGH;
     uint8_t counter = 0;
     uint8_t j = 0, i;
 
     data[0] = data[1] = data[2] = data[3] = data[4] = 0;
-    printf("Rohdaten: %d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4]);
-    
+
     // Sende ein Signal, um den DHT22 zu starten
-    pinMode(DHT_PIN, OUTPUT);
-    digitalWrite(DHT_PIN, LOW);
-    delay(18);
-    digitalWrite(DHT_PIN, HIGH);
-    delayMicroseconds(40);
-    pinMode(DHT_PIN, INPUT);
+    gpioSetMode(DHT_PIN, PI_OUTPUT);
+    gpioWrite(DHT_PIN, PI_LOW);
+    usleep(18000);  // 18 ms
+    gpioWrite(DHT_PIN, PI_HIGH);
+    usleep(40);  // 40 µs
+    gpioSetMode(DHT_PIN, PI_INPUT);
 
     // Lese die Daten vom Sensor
     for (i = 0; i < MAX_TIMINGS; i++) {
         counter = 0;
-        while (digitalRead(DHT_PIN) == laststate) {
+        while (gpioRead(DHT_PIN) == laststate) {
             counter++;
-            delayMicroseconds(1);
             if (counter == 255) {
                 break;
             }
+            usleep(1);
         }
-        laststate = digitalRead(DHT_PIN);
+        laststate = gpioRead(DHT_PIN);
 
         if (counter == 255) break;
 
@@ -63,15 +62,16 @@ void read_dht22_data() {
 }
 
 int main(void) {
-    if (wiringPiSetup() == -1) {
-        printf("WiringPi Setup fehlgeschlagen!\n");
+    if (gpioInitialise() < 0) {
+        printf("pigpio konnte nicht initialisiert werden!\n");
         return 1;
     }
 
     while (1) {
         read_dht22_data();
-        delay(2000);  // 2 Sekunden warten
+        sleep(2);  // 2 Sekunden warten
     }
 
+    gpioTerminate();
     return 0;
 }
