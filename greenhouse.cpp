@@ -1,12 +1,12 @@
 #include <wiringPi.h>
 #include <iostream>
 #include <string>
-#include <fcntl.h>      // File control definitions (open, O_RDWR, etc.)
-#include <unistd.h>     // UNIX standard function definitions (read, write, close)
-#include <termios.h>    // POSIX terminal control definitions
-#include <cstring>      // Für memset, etc.
-#include <algorithm>    // Für std::remove
-#include <DHT.h>        // DHT-Bibliothek für Raspberry Pi (z. B. wiringPi-DHT)
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <cstring>
+#include <algorithm>
+#include "DHT.h"  // Angepasst zur Nutzung ohne Arduino.h
 
 // Pin-Definitionen
 #define LED_PIN 0           // GPIO 17 = WiringPi 0
@@ -23,7 +23,7 @@ const char* serialPort = "/dev/ttyACM0"; // Pfad zur seriellen Schnittstelle
 int fd; // Datei-Deskriptor für die serielle Verbindung
 std::string serialBuffer; // Puffer für serielle Daten
 
-dht DHT; // Instanz für den DHT-Sensor
+DHT dht(DHT_PIN, DHT22); // Instanz für den DHT-Sensor
 
 // Funktionen
 void checkZahler() {
@@ -41,26 +41,16 @@ void printSerial(int soilValue, float humidity, float temperature) {
 }
 
 void readTempAirHumidity(float &humidity, float &temperature) {
-    int result = DHT.read22(DHT_PIN); // Lese Daten vom DHT22
-    if (result == DHTLIB_OK) {
-        humidity = DHT.humidity;
-        temperature = DHT.temperature;
-    } else {
-        std::cerr << "Fehler beim Lesen des DHT-Sensors: ";
-        switch (result) {
-            case DHTLIB_ERROR_CHECKSUM:
-                std::cerr << "Checksum-Fehler";
-                break;
-            case DHTLIB_ERROR_TIMEOUT:
-                std::cerr << "Timeout-Fehler";
-                break;
-            default:
-                std::cerr << "Unbekannter Fehler";
-        }
-        std::cerr << std::endl;
+    float temp = dht.readTemperature();
+    float hum = dht.readHumidity();
 
+    if (std::isnan(temp) || std::isnan(hum)) {
+        std::cerr << "Fehler beim Lesen des DHT-Sensors." << std::endl;
         humidity = -1.0; // Fehlerwert
         temperature = -1.0; // Fehlerwert
+    } else {
+        humidity = hum;
+        temperature = temp;
     }
 }
 
