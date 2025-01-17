@@ -14,7 +14,8 @@ void read_dht22_data() {
     uint8_t j = 0, i;
 
     data[0] = data[1] = data[2] = data[3] = data[4] = 0;
-
+    printf("Rohdaten: %d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4]);
+    
     // Sende ein Signal, um den DHT22 zu starten
     pinMode(DHT_PIN, OUTPUT);
     digitalWrite(DHT_PIN, LOW);
