@@ -3,3 +3,4 @@ adafruit-circuitpython-dht
 adafruit-blinka
 pyserial
 RPLCD
+smbus2
