@@ -22,7 +22,7 @@ class Config:
 class Hardware:
     def __init__(self, config):
         self.config = config
-        self.dht_device = adafruit_dht.DHT22(board.D22)
+        self.dht_device = adafruit_dht.DHT22(board.D18)
         self.arduino_serial = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
         try:
             self.lcd = CharLCD('PCF8574', config.I2C_ADDRESS, rows=config.LCD_ROWS, cols=config.LCD_COLS)
@@ -58,12 +58,19 @@ class Hardware:
             return None
 
     def test_lcd(self):
-        """Testet die LCD-Funktion durch Schreiben einer Testnachricht."""
+        """Testet die LCD-Funktion durch Schreiben von Testnachrichten in alle Zeilen."""
         if self.lcd:
             try:
                 self.lcd.clear()
-                self.lcd.write_string("LCD Test: OK")
-                time.sleep(2)
+                self.lcd.cursor_pos = (0, 0)
+                self.lcd.write_string("Zeile 1: Test")
+                self.lcd.cursor_pos = (1, 0)
+                self.lcd.write_string("Zeile 2: Test")
+                self.lcd.cursor_pos = (2, 0)
+                self.lcd.write_string("Zeile 3: Test")
+                self.lcd.cursor_pos = (3, 0)
+                self.lcd.write_string("Zeile 4: Test")
+                time.sleep(5)
                 self.lcd.clear()
             except Exception as e:
                 print(f"Fehler beim Testen des LCDs: {e}")
@@ -87,9 +94,8 @@ class GrowSystem:
                 self.hardware.lcd.clear()
                 for i, line in enumerate(lines):
                     if i < self.config.LCD_ROWS:
+                        self.hardware.lcd.cursor_pos = (i, 0)
                         self.hardware.lcd.write_string(line[:self.config.LCD_COLS])
-                        if i < self.config.LCD_ROWS - 1:
-                            self.hardware.lcd.crlf()
                 self.last_display_lines = lines
             except Exception as e:
                 print(f"Fehler bei der Ausgabe auf das LCD: {e}")
