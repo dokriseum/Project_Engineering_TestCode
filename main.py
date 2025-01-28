@@ -1,96 +1,107 @@
 import time
 import adafruit_dht
+import board
+import serial
 import RPi.GPIO as GPIO
 from RPLCD.i2c import CharLCD
-from smbus2 import SMBus
-import board
 
-# GPIO Pins
-DHT_PIN = board.D22  # Verwende board-Pin für Adafruit
-PUMP_PIN = 17
-FAN_PIN = 27
+# GPIO-Pins für Relais
+RELAY_WATER_PUMP = 17  # GPIO-Pin für Wasserpumpe
+RELAY_FAN_1 = 27       # GPIO-Pin für Lüfter 1
+RELAY_FAN_2 = 22       # GPIO-Pin für Lüfter 2
 
 # Schwellenwerte
-TEMP_THRESHOLD = 30.0  # in °C
-HUMIDITY_THRESHOLD = 80.0  # in %
-SOIL_MOISTURE_THRESHOLD = 30  # in %
+SOIL_MOISTURE_THRESHOLD = 30  # Bodenfeuchtigkeit in Prozent
+HUMIDITY_THRESHOLD = 70       # Luftfeuchtigkeit in Prozent
 
-# Setup GPIO
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(PUMP_PIN, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
+class GreenhouseController:
+    def __init__(self, dht_pin, relay_pump, relay_fan_1, relay_fan_2, lcd_address, arduino_port):
+        self.dht_device = adafruit_dht.DHT22(dht_pin)
+        self.relay_pump = relay_pump
+        self.relay_fan_1 = relay_fan_1
+        self.relay_fan_2 = relay_fan_2
+        self.arduino_serial = serial.Serial(arduino_port, 9600, timeout=1)
+        self.lcd = CharLCD('PCF8574', lcd_address, rows=4, cols=20)
+        
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.relay_pump, GPIO.OUT, initial=GPIO.HIGH)
+        GPIO.setup(self.relay_fan_1, GPIO.OUT, initial=GPIO.HIGH)
+        GPIO.setup(self.relay_fan_2, GPIO.OUT, initial=GPIO.HIGH)
 
-# LCD Setup (I2C Address and Dimensions)
-lcd = CharLCD('PCF8574', 0x27, cols=20, rows=4)
-
-# Sensor Setup
-dht_sensor = adafruit_dht.DHT22(board.D22)
-
-# Bodenfeuchtigkeitssensor Setup
-def read_soil_moisture():
-    with SMBus(1) as bus:
-        raw_value = bus.read_byte(0x48)  # Dummy-Adresse ersetzen, falls nötig
-        # Skalierung der Rohwerte in % (anpassen, falls nötig)
-        return 100 - (raw_value / 255.0 * 100)
-
-def update_lcd(temp, humidity, soil_moisture):
-    lcd.clear()
-    lcd.write_string(f"Temp: {temp:.1f}C")
-    lcd.crlf()
-    lcd.write_string(f"Humidity: {humidity:.1f}%")
-    lcd.crlf()
-    lcd.write_string(f"Soil Moisture:")
-    lcd.crlf()
-    lcd.write_string(f"{soil_moisture:.1f}%")
-
-def control_devices(temp, humidity, soil_moisture):
-    # Lüftersteuerung
-    if temp > TEMP_THRESHOLD or humidity > HUMIDITY_THRESHOLD:
-        GPIO.output(FAN_PIN, GPIO.HIGH)
-    else:
-        GPIO.output(FAN_PIN, GPIO.LOW)
-
-    # Wasserpumpensteuerung
-    if soil_moisture < SOIL_MOISTURE_THRESHOLD:
-        GPIO.output(PUMP_PIN, GPIO.HIGH)
-        time.sleep(5)  # Pumpe für 5 Sekunden laufen lassen
-        GPIO.output(PUMP_PIN, GPIO.LOW)
-
-try:
-    while True:
+    def read_dht22_data(self):
         try:
-            # Temperatur- und Feuchtigkeitsmessung
-            temperature = dht_sensor.temperature
-            humidity = dht_sensor.humidity
-
-            # Bodenfeuchtigkeitsmessung
-            soil_moisture = read_soil_moisture()
-
-            # Fehlerbehandlung bei Sensormessungen
-            if humidity is None or temperature is None:
-                lcd.clear()
-                lcd.write_string("DHT Sensor Error")
-                time.sleep(2)
-                continue
-
-            # Aktualisiere LCD-Anzeige
-            update_lcd(temperature, humidity, soil_moisture)
-
-            # Steuerung der Geräte
-            control_devices(temperature, humidity, soil_moisture)
-
+            temperature = self.dht_device.temperature
+            humidity = self.dht_device.humidity
+            return temperature, humidity
         except RuntimeError as error:
-            # Laufzeitfehler abfangen (typisch bei DHT-Sensoren)
-            lcd.clear()
-            lcd.write_string(f"Sensor Error: {error}")
+            print(f"DHT22 Error: {error}")
+            return None, None
+
+    def read_soil_moisture(self):
+        try:
+            if self.arduino_serial.in_waiting > 0:
+                data = self.arduino_serial.readline().decode('utf-8').strip()
+                return int(data)
+        except ValueError:
+            print("Invalid data from Arduino")
+        return None
+
+    def control_fans(self, humidity):
+        if humidity > HUMIDITY_THRESHOLD:
+            GPIO.output(self.relay_fan_1, GPIO.LOW)
+            GPIO.output(self.relay_fan_2, GPIO.LOW)
+            return "Fans: ON"
+        else:
+            GPIO.output(self.relay_fan_1, GPIO.HIGH)
+            GPIO.output(self.relay_fan_2, GPIO.HIGH)
+            return "Fans: OFF"
+
+    def control_pump(self, soil_moisture):
+        if soil_moisture < SOIL_MOISTURE_THRESHOLD:
+            GPIO.output(self.relay_pump, GPIO.LOW)
+            return "Pump: ON"
+        else:
+            GPIO.output(self.relay_pump, GPIO.HIGH)
+            return "Pump: OFF"
+
+    def update_lcd(self, temperature, humidity, soil_moisture, fan_status, pump_status):
+        self.lcd.clear()
+        self.lcd.write_string(f"Temp: {temperature:.1f}C  Hum: {humidity:.1f}%")
+        self.lcd.crlf()
+        self.lcd.write_string(f"Soil: {soil_moisture}%")
+        self.lcd.crlf()
+        self.lcd.write_string(f"{fan_status}")
+        self.lcd.crlf()
+        self.lcd.write_string(f"{pump_status}")
+
+    def cleanup(self):
+        self.dht_device.exit()
+        self.arduino_serial.close()
+        GPIO.cleanup()
+        self.lcd.clear()
+
+if __name__ == "__main__":
+    controller = GreenhouseController(
+        dht_pin=board.D22,
+        relay_pump=RELAY_WATER_PUMP,
+        relay_fan_1=RELAY_FAN_1,
+        relay_fan_2=RELAY_FAN_2,
+        lcd_address=0x27,
+        arduino_port='/dev/ttyACM0'
+    )
+
+    try:
+        while True:
+            temperature, humidity = controller.read_dht22_data()
+            soil_moisture = controller.read_soil_moisture()
+
+            if temperature is not None and humidity is not None and soil_moisture is not None:
+                fan_status = controller.control_fans(humidity)
+                pump_status = controller.control_pump(soil_moisture)
+                controller.update_lcd(temperature, humidity, soil_moisture, fan_status, pump_status)
+
             time.sleep(2)
-
-        # Wartezeit zwischen den Messungen
-        time.sleep(2)
-
-except KeyboardInterrupt:
-    print("Programm beendet.")
-
-finally:
-    GPIO.cleanup()
-    lcd.clear()
+    except KeyboardInterrupt:
+        print("Program terminated.")
+    finally:
+        controller.cleanup()
