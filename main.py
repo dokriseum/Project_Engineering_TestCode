@@ -23,7 +23,7 @@ GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
 lcd = CharLCD('PCF8574', 0x27, cols=20, rows=4)
 
 # Sensor Setup
-DHT_SENSOR = Adafruit_DHT.DHT22
+DHT_SENSOR = adafruit_dht.DHT22
 
 # Bodenfeuchtigkeitssensor Setup
 def read_soil_moisture():
