@@ -10,7 +10,7 @@ parent_dir = os.path.dirname(current_dir)
 # Dem Python-Pfad hinzufügen
 sys.path.append(parent_dir)
 
-from greenhouse_controller import GreenhouseController, HUMIDITY_THRESHOLD, SOIL_MOISTURE_THRESHOLD
+from main.greenhouse_controller import GreenhouseController, HUMIDITY_THRESHOLD, SOIL_MOISTURE_THRESHOLD
 
 @pytest.fixture
 def mock_controller():

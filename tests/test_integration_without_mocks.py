@@ -10,7 +10,7 @@ parent_dir = os.path.dirname(current_dir)
 # Dem Python-Pfad hinzufügen
 sys.path.append(parent_dir)
 
-from greenhouse_controller import GreenhouseController
+from main.greenhouse_controller import GreenhouseController
 
 @pytest.fixture(scope="module")
 def controller():
