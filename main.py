@@ -84,6 +84,14 @@ class GrowSystem:
     def control_relay(self, relay, state):
         GPIO.output(relay, GPIO.LOW if state else GPIO.HIGH)
 
+    def sanitize_data(self, data):
+        """Säubert Daten, um Fehler auf dem LCD zu vermeiden."""
+        if data is None:
+            return "---"
+        if isinstance(data, (float, int)):
+            return f"{data:.1f}" if isinstance(data, float) else str(data)
+        return str(data)[:self.config.LCD_COLS]
+
     def display_on_lcd(self, lines):
         if self.hardware.lcd is None:
             print("LCD ist nicht initialisiert. Keine Ausgabe möglich.")
@@ -91,12 +99,12 @@ class GrowSystem:
 
         if lines != self.last_display_lines:
             try:
-                self.hardware.lcd.clear()
                 for i, line in enumerate(lines):
                     if i < self.config.LCD_ROWS:
                         self.hardware.lcd.cursor_pos = (i, 0)
-                        self.hardware.lcd.write_string(line[:self.config.LCD_COLS])
+                        self.hardware.lcd.write_string(line.ljust(self.config.LCD_COLS))
                 self.last_display_lines = lines
+                print("Auf LCD ausgegeben:", lines)
             except Exception as e:
                 print(f"Fehler bei der Ausgabe auf das LCD: {e}")
 
@@ -105,26 +113,27 @@ class GrowSystem:
         temperature, humidity = self.hardware.read_dht_sensor()
         soil_moisture = self.hardware.read_soil_moisture()
 
-        if temperature is None or humidity is None or soil_moisture is None:
-            return
+        temperature_display = self.sanitize_data(temperature)
+        humidity_display = self.sanitize_data(humidity)
+        soil_moisture_display = self.sanitize_data(soil_moisture)
 
         # Steuerlogik für Bodenfeuchtigkeit
-        if soil_moisture < self.config.SOIL_MOISTURE_THRESHOLD:
+        if soil_moisture is not None and soil_moisture < self.config.SOIL_MOISTURE_THRESHOLD:
             self.control_relay(self.config.RELAY_WATER_PUMP, True)
         else:
             self.control_relay(self.config.RELAY_WATER_PUMP, False)
 
         # Steuerlogik für Luftfeuchtigkeit
-        if humidity < self.config.HUMIDITY_THRESHOLD:
+        if humidity is not None and humidity < self.config.HUMIDITY_THRESHOLD:
             self.control_relay(self.config.RELAY_FAN_1, True)
         else:
             self.control_relay(self.config.RELAY_FAN_1, False)
 
         # Daten auf LCD anzeigen
         lines = [
-            f"Temp: {temperature:.1f} C",
-            f"Hum: {humidity:.1f} %",
-            f"Soil: {soil_moisture}%"
+            f"Temp: {temperature_display} C",
+            f"Hum: {humidity_display} %",
+            f"Soil: {soil_moisture_display}%"
         ]
         self.display_on_lcd(lines)
 
