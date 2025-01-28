@@ -3,13 +3,6 @@ import pytest
 import time
 from main.greenhouse_controller import GreenhouseController
 import logging
-
-def test_example_function():
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-    logger.debug("Test started for example_function")
-    assert example_function() == expected_output
-    logger.debug("Test finished successfully")
     
 @pytest.fixture(scope="module")
 def controller():
@@ -25,6 +18,11 @@ def test_dht22_data(controller):
     """
     Integrationstest für DHT22 (Voraussetzung: echter Sensor angeschlossen).
     """
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    logger.debug("Test finished successfully")
+    
     controller.read_dht22_data()
     assert True
 
@@ -32,6 +30,11 @@ def test_soil_moisture(controller):
     """
     Integrationstest für Bodenfeuchtigkeit (Voraussetzung: echtes Arduino-Setup).
     """
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    logger.debug("Test finished successfully")
+    
     # Hier wird davon ausgegangen, dass das Arduino was sendet.
     # Ohne angeschlossenes Arduino schlägt der Test fehl.
     controller.read_soil_moisture()
@@ -41,6 +44,11 @@ def test_cleanup_no_exceptions(controller):
     """
     Testet, ob das Bereinigen keine Fehler wirft.
     """
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    logger.debug("Test finished successfully")
+    
     # Nochmals aufrufen, um sicherzustellen, dass kein Fehler bei mehrfachaufruf passiert.
     controller.cleanup()
     assert True

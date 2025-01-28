@@ -9,12 +9,6 @@ from main.greenhouse_controller import (
 
 import logging
 
-def test_example_function():
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-    logger.debug("Test started for example_function")
-    assert example_function() == expected_output
-    logger.debug("Test finished successfully")
     
 @pytest.fixture
 def mock_controller():
@@ -47,6 +41,12 @@ def test_read_dht22_data_high_humidity(mock_controller):
     """
     Prüft, ob bei hoher Luftfeuchtigkeit der Lüfter aktiviert wird.
     """
+    
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    logger.debug("Test finished successfully")
+    
     controller, dht_instance, serial_instance, mock_gpio, lcd_instance = mock_controller
     
     # Setup der Sensordaten
@@ -63,6 +63,12 @@ def test_read_dht22_data_low_humidity(mock_controller):
     """
     Prüft, ob bei niedriger Luftfeuchtigkeit der Lüfter deaktiviert wird.
     """
+    
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    logger.debug("Test finished successfully")
+    
     controller, dht_instance, serial_instance, mock_gpio, lcd_instance = mock_controller
     
     # Setup der Sensordaten
@@ -79,6 +85,11 @@ def test_read_soil_moisture_low_moisture(mock_controller):
     """
     Prüft, ob bei zu niedriger Bodenfeuchtigkeit die Pumpe aktiviert wird.
     """
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    logger.debug("Test finished successfully")
+    
     controller, dht_instance, serial_instance, mock_gpio, lcd_instance = mock_controller
     
     # Arduino gibt Feuchtigkeitswert unterhalb der Schwelle aus
@@ -94,6 +105,11 @@ def test_read_soil_moisture_high_moisture(mock_controller):
     """
     Prüft, ob bei ausreichender Bodenfeuchtigkeit die Pumpe deaktiviert wird.
     """
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    logger.debug("Test finished successfully")
+    
     controller, dht_instance, serial_instance, mock_gpio, lcd_instance = mock_controller
     
     # Arduino gibt Feuchtigkeitswert oberhalb der Schwelle aus
