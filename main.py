@@ -3,9 +3,10 @@ import adafruit_dht
 import RPi.GPIO as GPIO
 from RPLCD.i2c import CharLCD
 from smbus2 import SMBus
+import board
 
 # GPIO Pins
-DHT_PIN = 22
+DHT_PIN = board.D22  # Verwende board-Pin für Adafruit
 PUMP_PIN = 17
 FAN_PIN = 27
 
@@ -23,7 +24,7 @@ GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
 lcd = CharLCD('PCF8574', 0x27, cols=20, rows=4)
 
 # Sensor Setup
-DHT_SENSOR = adafruit_dht.DHT22
+dht_sensor = adafruit_dht.DHT22(DHT_PIN)
 
 # Bodenfeuchtigkeitssensor Setup
 def read_soil_moisture():
@@ -57,24 +58,32 @@ def control_devices(temp, humidity, soil_moisture):
 
 try:
     while True:
-        # Temperatur- und Feuchtigkeitsmessung
-        humidity, temperature = adafruit_dht.read_retry(DHT_SENSOR, DHT_PIN)
+        try:
+            # Temperatur- und Feuchtigkeitsmessung
+            temperature = dht_sensor.temperature
+            humidity = dht_sensor.humidity
 
-        # Bodenfeuchtigkeitsmessung
-        soil_moisture = read_soil_moisture()
+            # Bodenfeuchtigkeitsmessung
+            soil_moisture = read_soil_moisture()
 
-        # Fehlerbehandlung bei Sensormessungen
-        if humidity is None or temperature is None:
+            # Fehlerbehandlung bei Sensormessungen
+            if humidity is None or temperature is None:
+                lcd.clear()
+                lcd.write_string("DHT Sensor Error")
+                time.sleep(2)
+                continue
+
+            # Aktualisiere LCD-Anzeige
+            update_lcd(temperature, humidity, soil_moisture)
+
+            # Steuerung der Geräte
+            control_devices(temperature, humidity, soil_moisture)
+
+        except RuntimeError as error:
+            # Laufzeitfehler abfangen (typisch bei DHT-Sensoren)
             lcd.clear()
-            lcd.write_string("DHT Sensor Error")
+            lcd.write_string(f"Sensor Error: {error}")
             time.sleep(2)
-            continue
-
-        # Aktualisiere LCD-Anzeige
-        update_lcd(temperature, humidity, soil_moisture)
-
-        # Steuerung der Geräte
-        control_devices(temperature, humidity, soil_moisture)
 
         # Wartezeit zwischen den Messungen
         time.sleep(2)
