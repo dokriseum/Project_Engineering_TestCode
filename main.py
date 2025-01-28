@@ -22,7 +22,7 @@ class Config:
 class Hardware:
     def __init__(self, config):
         self.config = config
-        self.dht_device = adafruit_dht.DHT22(board.D18)
+        self.dht_device = adafruit_dht.DHT22(board.D22)
         self.arduino_serial = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
         self.lcd = CharLCD('PCF8574', config.I2C_ADDRESS, rows=config.LCD_ROWS, cols=config.LCD_COLS)
         self._setup_gpio()
@@ -55,17 +55,20 @@ class GrowSystem:
     def __init__(self, hardware, config):
         self.hardware = hardware
         self.config = config
+        self.last_display_lines = ["" for _ in range(config.LCD_ROWS)]
 
     def control_relay(self, relay, state):
         GPIO.output(relay, GPIO.LOW if state else GPIO.HIGH)
 
     def display_on_lcd(self, lines):
-        self.hardware.lcd.clear()
-        for i, line in enumerate(lines):
-            if i < self.config.LCD_ROWS:
-                self.hardware.lcd.write_string(line[:self.config.LCD_COLS])
-                if i < self.config.LCD_ROWS - 1:
-                    self.hardware.lcd.crlf()
+        if lines != self.last_display_lines:
+            self.hardware.lcd.clear()
+            for i, line in enumerate(lines):
+                if i < self.config.LCD_ROWS:
+                    self.hardware.lcd.write_string(line[:self.config.LCD_COLS])
+                    if i < self.config.LCD_ROWS - 1:
+                        self.hardware.lcd.crlf()
+            self.last_display_lines = lines
 
     def control_system(self):
         # Sensorwerte auslesen
