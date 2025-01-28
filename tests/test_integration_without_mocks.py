@@ -1,15 +1,6 @@
+# test_integration_without_mocks.py
 import pytest
 import time
-import sys
-import os
-
-# Verzeichnis des aktuellen Skripts
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# Verzeichnis übergeordnete Ebene
-parent_dir = os.path.dirname(current_dir)
-# Dem Python-Pfad hinzufügen
-sys.path.append(parent_dir)
-
 from main.greenhouse_controller import GreenhouseController
 
 @pytest.fixture(scope="module")
@@ -27,8 +18,6 @@ def test_dht22_data(controller):
     Integrationstest für DHT22 (Voraussetzung: echter Sensor angeschlossen).
     """
     controller.read_dht22_data()
-    # Hier keine konkrete Prüfung, da Real-Hardware. 
-    # Man könnte z.B. nur prüfen, ob kein Exception geworfen wurde.
     assert True
 
 def test_soil_moisture(controller):

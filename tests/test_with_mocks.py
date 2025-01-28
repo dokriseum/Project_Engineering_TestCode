@@ -1,26 +1,18 @@
+# test_with_mocks.py
 import pytest
 from unittest.mock import MagicMock, patch
-import sys
-import os
-
-# Verzeichnis des aktuellen Skripts
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# Verzeichnis übergeordnete Ebene
-parent_dir = os.path.dirname(current_dir)
-# Dem Python-Pfad hinzufügen
-sys.path.append(parent_dir)
-
-from main.greenhouse_controller import GreenhouseController, HUMIDITY_THRESHOLD, SOIL_MOISTURE_THRESHOLD
+from main.greenhouse_controller import (
+    GreenhouseController,
+    HUMIDITY_THRESHOLD,
+    SOIL_MOISTURE_THRESHOLD,
+)
 
 @pytest.fixture
 def mock_controller():
-    """
-    Erzeugt eine Controller-Instanz, in der alle Hardware-Aufrufe gemockt werden.
-    """
-    with patch('greenhouse_controller.adafruit_dht.DHT22') as mock_dht, \
-         patch('greenhouse_controller.serial.Serial') as mock_serial, \
-         patch('greenhouse_controller.GPIO') as mock_gpio, \
-         patch('greenhouse_controller.CharLCD') as mock_lcd:
+    with patch('main.greenhouse_controller.adafruit_dht.DHT22') as mock_dht, \
+         patch('main.greenhouse_controller.serial.Serial') as mock_serial, \
+         patch('main.greenhouse_controller.GPIO') as mock_gpio, \
+         patch('main.greenhouse_controller.CharLCD') as mock_lcd:
         
         # Mock-Objekte konfigurieren
         dht_instance = MagicMock()
