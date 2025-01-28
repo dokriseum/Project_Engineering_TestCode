@@ -22,9 +22,17 @@ class Config:
 class Hardware:
     def __init__(self, config):
         self.config = config
-        self.dht_device = adafruit_dht.DHT22(board.D22)
+        self.dht_device = adafruit_dht.DHT22(board.D18)
         self.arduino_serial = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-        self.lcd = CharLCD('PCF8574', config.I2C_ADDRESS, rows=config.LCD_ROWS, cols=config.LCD_COLS)
+        try:
+            self.lcd = CharLCD('PCF8574', config.I2C_ADDRESS, rows=config.LCD_ROWS, cols=config.LCD_COLS)
+            print("LCD erfolgreich initialisiert.")
+            self.lcd.write_string("System startet...")
+            time.sleep(2)
+            self.lcd.clear()
+        except Exception as e:
+            print(f"Fehler bei der Initialisierung des LCDs: {e}")
+            self.lcd = None
         self._setup_gpio()
 
     def _setup_gpio(self):
@@ -61,12 +69,21 @@ class GrowSystem:
         GPIO.output(relay, GPIO.LOW if state else GPIO.HIGH)
 
     def display_on_lcd(self, lines):
-        self.hardware.lcd.clear()
-        for i, line in enumerate(lines):
-            if i < self.config.LCD_ROWS:
-                self.hardware.lcd.write_string(line[:self.config.LCD_COLS])
-                if i < self.config.LCD_ROWS - 1:
-                    self.hardware.lcd.crlf()
+        if self.hardware.lcd is None:
+            print("LCD ist nicht initialisiert. Keine Ausgabe möglich.")
+            return
+
+        if lines != self.last_display_lines:
+            try:
+                self.hardware.lcd.clear()
+                for i, line in enumerate(lines):
+                    if i < self.config.LCD_ROWS:
+                        self.hardware.lcd.write_string(line[:self.config.LCD_COLS])
+                        if i < self.config.LCD_ROWS - 1:
+                            self.hardware.lcd.crlf()
+                self.last_display_lines = lines
+            except Exception as e:
+                print(f"Fehler bei der Ausgabe auf das LCD: {e}")
 
     def control_system(self):
         # Sensorwerte auslesen
