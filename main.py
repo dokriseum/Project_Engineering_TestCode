@@ -22,14 +22,12 @@ class Config:
 class Hardware:
     def __init__(self, config):
         self.config = config
-        self.dht_device = adafruit_dht.DHT22(board.D18)
+        self.dht_device = adafruit_dht.DHT22(board.D22)
         self.arduino_serial = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
         try:
             self.lcd = CharLCD('PCF8574', config.I2C_ADDRESS, rows=config.LCD_ROWS, cols=config.LCD_COLS)
             print("LCD erfolgreich initialisiert.")
-            self.lcd.write_string("System startet...")
-            time.sleep(2)
-            self.lcd.clear()
+            self.test_lcd()
         except Exception as e:
             print(f"Fehler bei der Initialisierung des LCDs: {e}")
             self.lcd = None
@@ -58,6 +56,17 @@ class Hardware:
             return int(line)
         except ValueError:
             return None
+
+    def test_lcd(self):
+        """Testet die LCD-Funktion durch Schreiben einer Testnachricht."""
+        if self.lcd:
+            try:
+                self.lcd.clear()
+                self.lcd.write_string("LCD Test: OK")
+                time.sleep(2)
+                self.lcd.clear()
+            except Exception as e:
+                print(f"Fehler beim Testen des LCDs: {e}")
 
 class GrowSystem:
     def __init__(self, hardware, config):
