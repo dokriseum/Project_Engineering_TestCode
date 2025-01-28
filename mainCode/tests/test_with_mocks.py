@@ -1,5 +1,15 @@
 import pytest
 from unittest.mock import MagicMock, patch
+import sys
+import os
+
+# Verzeichnis des aktuellen Skripts
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Verzeichnis übergeordnete Ebene
+parent_dir = os.path.dirname(current_dir)
+# Dem Python-Pfad hinzufügen
+sys.path.append(parent_dir)
+
 from greenhouse_controller import GreenhouseController, HUMIDITY_THRESHOLD, SOIL_MOISTURE_THRESHOLD
 
 @pytest.fixture

@@ -1,5 +1,15 @@
 import pytest
 import time
+import sys
+import os
+
+# Verzeichnis des aktuellen Skripts
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Verzeichnis übergeordnete Ebene
+parent_dir = os.path.dirname(current_dir)
+# Dem Python-Pfad hinzufügen
+sys.path.append(parent_dir)
+
 from greenhouse_controller import GreenhouseController
 
 @pytest.fixture(scope="module")
