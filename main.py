@@ -61,14 +61,12 @@ class GrowSystem:
         GPIO.output(relay, GPIO.LOW if state else GPIO.HIGH)
 
     def display_on_lcd(self, lines):
-        if lines != self.last_display_lines:
-            self.hardware.lcd.clear()
-            for i, line in enumerate(lines):
-                if i < self.config.LCD_ROWS:
-                    self.hardware.lcd.write_string(line[:self.config.LCD_COLS])
-                    if i < self.config.LCD_ROWS - 1:
-                        self.hardware.lcd.crlf()
-            self.last_display_lines = lines
+        self.hardware.lcd.clear()
+        for i, line in enumerate(lines):
+            if i < self.config.LCD_ROWS:
+                self.hardware.lcd.write_string(line[:self.config.LCD_COLS])
+                if i < self.config.LCD_ROWS - 1:
+                    self.hardware.lcd.crlf()
 
     def control_system(self):
         # Sensorwerte auslesen
