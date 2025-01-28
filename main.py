@@ -1,5 +1,5 @@
 import time
-import Adafruit_DHT
+import adafruit_dht
 import RPi.GPIO as GPIO
 from RPLCD.i2c import CharLCD
 from smbus2 import SMBus
