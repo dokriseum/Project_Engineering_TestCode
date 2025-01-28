@@ -1,152 +1,87 @@
 import time
-import adafruit_dht
-import board
-import serial
+import Adafruit_DHT
 import RPi.GPIO as GPIO
 from RPLCD.i2c import CharLCD
+from smbus2 import SMBus
 
-class Config:
-    # GPIO-Pins für Relais
-    RELAY_WATER_PUMP = 17
-    RELAY_FAN_1 = 27
+# GPIO Pins
+DHT_PIN = 22
+PUMP_PIN = 17
+FAN_PIN = 27
 
-    # Schwellenwerte
-    SOIL_MOISTURE_THRESHOLD = 30  # Bodenfeuchtigkeit in Prozent
-    HUMIDITY_THRESHOLD = 70       # Luftfeuchtigkeit in Prozent
+# Schwellenwerte
+TEMP_THRESHOLD = 30.0  # in °C
+HUMIDITY_THRESHOLD = 80.0  # in %
+SOIL_MOISTURE_THRESHOLD = 30  # in %
 
-    # LCD-Parameter
-    I2C_ADDRESS = 0x27  # Adresse des I2C-LCDs
-    LCD_ROWS = 4
-    LCD_COLS = 20
+# Setup GPIO
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(PUMP_PIN, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
 
-class Hardware:
-    def __init__(self, config):
-        self.config = config
-        self.dht_device = adafruit_dht.DHT22(board.D18)
-        self.arduino_serial = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-        try:
-            self.lcd = CharLCD('PCF8574', config.I2C_ADDRESS, rows=config.LCD_ROWS, cols=config.LCD_COLS)
-            print("LCD erfolgreich initialisiert.")
-            self.test_lcd()
-        except Exception as e:
-            print(f"Fehler bei der Initialisierung des LCDs: {e}")
-            self.lcd = None
-        self._setup_gpio()
+# LCD Setup (I2C Address and Dimensions)
+lcd = CharLCD('PCF8574', 0x27, cols=20, rows=4)
 
-    def _setup_gpio(self):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.config.RELAY_WATER_PUMP, GPIO.OUT, initial=GPIO.HIGH)  # Relais aus
-        GPIO.setup(self.config.RELAY_FAN_1, GPIO.OUT, initial=GPIO.HIGH)       # Relais aus
+# Sensor Setup
+DHT_SENSOR = Adafruit_DHT.DHT22
 
-    def cleanup(self):
-        GPIO.cleanup()
+# Bodenfeuchtigkeitssensor Setup
+def read_soil_moisture():
+    with SMBus(1) as bus:
+        raw_value = bus.read_byte(0x48)  # Dummy-Adresse ersetzen, falls nötig
+        # Skalierung der Rohwerte in % (anpassen, falls nötig)
+        return 100 - (raw_value / 255.0 * 100)
 
-    def read_dht_sensor(self):
-        try:
-            temperature = self.dht_device.temperature
-            humidity = self.dht_device.humidity
-            return temperature, humidity
-        except RuntimeError:
-            return None, None
+def update_lcd(temp, humidity, soil_moisture):
+    lcd.clear()
+    lcd.write_string(f"Temp: {temp:.1f}C")
+    lcd.crlf()
+    lcd.write_string(f"Humidity: {humidity:.1f}%")
+    lcd.crlf()
+    lcd.write_string(f"Soil Moisture:")
+    lcd.crlf()
+    lcd.write_string(f"{soil_moisture:.1f}%")
 
-    def read_soil_moisture(self):
-        self.arduino_serial.write(b"read_soil_moisture\n")
-        line = self.arduino_serial.readline().decode().strip()
-        try:
-            return int(line)
-        except ValueError:
-            return None
+def control_devices(temp, humidity, soil_moisture):
+    # Lüftersteuerung
+    if temp > TEMP_THRESHOLD or humidity > HUMIDITY_THRESHOLD:
+        GPIO.output(FAN_PIN, GPIO.HIGH)
+    else:
+        GPIO.output(FAN_PIN, GPIO.LOW)
 
-    def test_lcd(self):
-        """Testet die LCD-Funktion durch Schreiben von Testnachrichten in alle Zeilen."""
-        if self.lcd:
-            try:
-                self.lcd.clear()
-                self.lcd.cursor_pos = (0, 0)
-                self.lcd.write_string("Zeile 1: Test")
-                self.lcd.cursor_pos = (1, 0)
-                self.lcd.write_string("Zeile 2: Test")
-                self.lcd.cursor_pos = (2, 0)
-                self.lcd.write_string("Zeile 3: Test")
-                self.lcd.cursor_pos = (3, 0)
-                self.lcd.write_string("Zeile 4: Test")
-                time.sleep(5)
-                self.lcd.clear()
-            except Exception as e:
-                print(f"Fehler beim Testen des LCDs: {e}")
+    # Wasserpumpensteuerung
+    if soil_moisture < SOIL_MOISTURE_THRESHOLD:
+        GPIO.output(PUMP_PIN, GPIO.HIGH)
+        time.sleep(5)  # Pumpe für 5 Sekunden laufen lassen
+        GPIO.output(PUMP_PIN, GPIO.LOW)
 
-class GrowSystem:
-    def __init__(self, hardware, config):
-        self.hardware = hardware
-        self.config = config
-        self.last_display_lines = ["" for _ in range(config.LCD_ROWS)]
+try:
+    while True:
+        # Temperatur- und Feuchtigkeitsmessung
+        humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
 
-    def control_relay(self, relay, state):
-        GPIO.output(relay, GPIO.LOW if state else GPIO.HIGH)
+        # Bodenfeuchtigkeitsmessung
+        soil_moisture = read_soil_moisture()
 
-    def sanitize_data(self, data):
-        """Säubert Daten, um Fehler auf dem LCD zu vermeiden."""
-        if data is None:
-            return "---"
-        if isinstance(data, (float, int)):
-            return f"{data:.1f}" if isinstance(data, float) else str(data)
-        return str(data)[:self.config.LCD_COLS]
-
-    def display_on_lcd(self, lines):
-        if self.hardware.lcd is None:
-            print("LCD ist nicht initialisiert. Keine Ausgabe möglich.")
-            return
-
-        if lines != self.last_display_lines:
-            try:
-                for i, line in enumerate(lines):
-                    if i < self.config.LCD_ROWS:
-                        self.hardware.lcd.cursor_pos = (i, 0)
-                        self.hardware.lcd.write_string(line.ljust(self.config.LCD_COLS))
-                self.last_display_lines = lines
-                print("Auf LCD ausgegeben:", lines)
-            except Exception as e:
-                print(f"Fehler bei der Ausgabe auf das LCD: {e}")
-
-    def control_system(self):
-        # Sensorwerte auslesen
-        temperature, humidity = self.hardware.read_dht_sensor()
-        soil_moisture = self.hardware.read_soil_moisture()
-
-        temperature_display = self.sanitize_data(temperature)
-        humidity_display = self.sanitize_data(humidity)
-        soil_moisture_display = self.sanitize_data(soil_moisture)
-
-        # Steuerlogik für Bodenfeuchtigkeit
-        if soil_moisture is not None and soil_moisture < self.config.SOIL_MOISTURE_THRESHOLD:
-            self.control_relay(self.config.RELAY_WATER_PUMP, True)
-        else:
-            self.control_relay(self.config.RELAY_WATER_PUMP, False)
-
-        # Steuerlogik für Luftfeuchtigkeit
-        if humidity is not None and humidity < self.config.HUMIDITY_THRESHOLD:
-            self.control_relay(self.config.RELAY_FAN_1, True)
-        else:
-            self.control_relay(self.config.RELAY_FAN_1, False)
-
-        # Daten auf LCD anzeigen
-        lines = [
-            f"Temp: {temperature_display} C",
-            f"Hum: {humidity_display} %",
-            f"Soil: {soil_moisture_display}%"
-        ]
-        self.display_on_lcd(lines)
-
-if __name__ == "__main__":
-    config = Config()
-    hardware = Hardware(config)
-    grow_system = GrowSystem(hardware, config)
-
-    try:
-        while True:
-            grow_system.control_system()
+        # Fehlerbehandlung bei Sensormessungen
+        if humidity is None or temperature is None:
+            lcd.clear()
+            lcd.write_string("DHT Sensor Error")
             time.sleep(2)
-    except KeyboardInterrupt:
-        print("Beende das System...")
-    finally:
-        hardware.cleanup()
+            continue
+
+        # Aktualisiere LCD-Anzeige
+        update_lcd(temperature, humidity, soil_moisture)
+
+        # Steuerung der Geräte
+        control_devices(temperature, humidity, soil_moisture)
+
+        # Wartezeit zwischen den Messungen
+        time.sleep(2)
+
+except KeyboardInterrupt:
+    print("Programm beendet.")
+
+finally:
+    GPIO.cleanup()
+    lcd.clear()
