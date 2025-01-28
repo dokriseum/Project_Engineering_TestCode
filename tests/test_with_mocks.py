@@ -7,6 +7,15 @@ from main.greenhouse_controller import (
     SOIL_MOISTURE_THRESHOLD,
 )
 
+import logging
+
+def test_example_function():
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    assert example_function() == expected_output
+    logger.debug("Test finished successfully")
+    
 @pytest.fixture
 def mock_controller():
     with patch('main.greenhouse_controller.adafruit_dht.DHT22') as mock_dht, \

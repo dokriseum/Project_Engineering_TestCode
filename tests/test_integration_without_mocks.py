@@ -2,7 +2,15 @@
 import pytest
 import time
 from main.greenhouse_controller import GreenhouseController
+import logging
 
+def test_example_function():
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Test started for example_function")
+    assert example_function() == expected_output
+    logger.debug("Test finished successfully")
+    
 @pytest.fixture(scope="module")
 def controller():
     """
