@@ -14,104 +14,134 @@ RELAY_FAN_2 = 22       # GPIO-Pin für Lüfter 2
 SOIL_MOISTURE_THRESHOLD = 30  # Bodenfeuchtigkeit in Prozent
 HUMIDITY_THRESHOLD = 70       # Luftfeuchtigkeit in Prozent
 
-# Sensor initialisieren (DHT22 am GPIO4)
-dht_device = adafruit_dht.DHT22(board.D22)
+class GreenhouseController:
+    def __init__(self,
+                 dht_sensor_pin=board.D22,
+                 lcd_address=0x27,
+                 lcd_rows=4,
+                 lcd_cols=20,
+                 arduino_port='/dev/ttyACM0',
+                 arduino_baudrate=9600):
+        """
+        Initialisiert die notwendigen Ressourcen (DHT, Arduino-Serial, GPIO, LCD).
+        """
+        # Sensor initialisieren (DHT22)
+        self.dht_device = adafruit_dht.DHT22(dht_sensor_pin)
 
-# Serielle Verbindung zum Arduino herstellen
-arduino_serial = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+        # Serielle Verbindung zum Arduino
+        self.arduino_serial = serial.Serial(arduino_port, arduino_baudrate, timeout=1)
 
-# GPIO initialisieren
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(RELAY_WATER_PUMP, GPIO.OUT, initial=GPIO.HIGH)  # Relais aus
-GPIO.setup(RELAY_FAN_1, GPIO.OUT, initial=GPIO.HIGH)       # Relais aus
-GPIO.setup(RELAY_FAN_2, GPIO.OUT, initial=GPIO.HIGH)       # Relais aus
+        # GPIO initialisieren
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(RELAY_WATER_PUMP, GPIO.OUT, initial=GPIO.HIGH)  # Relais aus
+        GPIO.setup(RELAY_FAN_1, GPIO.OUT, initial=GPIO.HIGH)       # Relais aus
+        GPIO.setup(RELAY_FAN_2, GPIO.OUT, initial=GPIO.HIGH)       # Relais aus
 
-# LCD-Parameter
-I2C_ADDRESS = 0x27  # Adresse des I2C-LCDs
-LCD_ROWS = 4
-LCD_COLS = 20
+        # LCD initialisieren
+        self.lcd = CharLCD('PCF8574', lcd_address, rows=lcd_rows, cols=lcd_cols)
+        self.lcd.clear()
 
-# LCD initialisieren
-lcd = CharLCD('PCF8574', I2C_ADDRESS, rows=LCD_ROWS, cols=LCD_COLS)
-
-try:
-    lcd.clear()
-
-    def read_dht22_data():
-        """Liest Temperatur und Luftfeuchtigkeit vom DHT22-Sensor aus."""
+    def read_dht22_data(self):
+        """
+        Liest Temperatur und Luftfeuchtigkeit vom DHT22-Sensor aus
+        und steuert entsprechend die Lüfter. Aktualisiert das LCD.
+        """
         try:
-            # Temperatur und Luftfeuchtigkeit auslesen
-            temperature = dht_device.temperature
-            humidity = dht_device.humidity
+            temperature = self.dht_device.temperature
+            humidity = self.dht_device.humidity
 
             if temperature is not None and humidity is not None:
                 print(f"Temperatur: {temperature:.2f}°C")
                 print(f"Luftfeuchtigkeit: {humidity:.2f}%")
 
-                # Lüftersteuerung basierend auf Luftfeuchtigkeit
+                # Lüftersteuerung
                 if humidity > HUMIDITY_THRESHOLD:
                     print("Luftfeuchtigkeit zu hoch. Lüfter werden aktiviert.")
                     GPIO.output(RELAY_FAN_1, GPIO.LOW)  # Lüfter 1 einschalten
                     GPIO.output(RELAY_FAN_2, GPIO.LOW)  # Lüfter 2 einschalten
                     fan_status = "Lüfter: AN"
                 else:
-                    GPIO.output(RELAY_FAN_1, GPIO.HIGH) # Lüfter 1 ausschalten
-                    GPIO.output(RELAY_FAN_2, GPIO.HIGH) # Lüfter 2 ausschalten
+                    GPIO.output(RELAY_FAN_1, GPIO.HIGH)  # Lüfter 1 ausschalten
+                    GPIO.output(RELAY_FAN_2, GPIO.HIGH)  # Lüfter 2 ausschalten
                     fan_status = "Lüfter: AUS"
 
                 # LCD aktualisieren
-                lcd.cursor_pos = (0, 0)
-                lcd.write_string(f"Temp: {temperature:.1f}C  Hum: {humidity:.1f}%")
-                lcd.cursor_pos = (1, 0)
-                lcd.write_string(f"{fan_status}       ")  # Füllt Zeile mit Leerzeichen
-
+                self.lcd.cursor_pos = (0, 0)
+                self.lcd.write_string(f"Temp: {temperature:.1f}C  Hum: {humidity:.1f}%")
+                self.lcd.cursor_pos = (1, 0)
+                self.lcd.write_string(f"{fan_status}       ")
             else:
                 print("Fehler beim Lesen des DHT22-Sensors. Daten sind None.")
+
         except RuntimeError as error:
-            # Fehler während des Lesens abfangen (z. B. Zeitüberschreitung)
+            # Fehler während des Lesens abfangen (z.B. Zeitüberschreitung)
             print(f"Leseproblem DHT22: {error.args[0]}")
         except Exception as error:
-            dht_device.exit()
+            self.dht_device.exit()
             raise error
 
-    def read_soil_moisture():
-        """Liest die Bodenfeuchtigkeit vom Arduino aus."""
+    def read_soil_moisture(self):
+        """
+        Liest die Bodenfeuchtigkeit vom Arduino aus und steuert die Wasserpumpe.
+        Aktualisiert das LCD.
+        """
         try:
-            if arduino_serial.in_waiting > 0:
-                data = arduino_serial.readline().decode('utf-8').strip()
+            if self.arduino_serial.in_waiting > 0:
+                data = self.arduino_serial.readline().decode('utf-8').strip()
                 moisture = int(data)
                 print(f"Bodenfeuchtigkeit: {moisture}%")
 
-                # Wasserpumpensteuerung basierend auf Bodenfeuchtigkeit
                 if moisture < SOIL_MOISTURE_THRESHOLD:
                     print("Bodenfeuchtigkeit zu niedrig. Wasserpumpe wird aktiviert.")
                     GPIO.output(RELAY_WATER_PUMP, GPIO.LOW)  # Wasserpumpe einschalten
                     pump_status = "Pumpe: AN"
                 else:
-                    GPIO.output(RELAY_WATER_PUMP, GPIO.HIGH) # Wasserpumpe ausschalten
+                    GPIO.output(RELAY_WATER_PUMP, GPIO.HIGH)  # Wasserpumpe ausschalten
                     pump_status = "Pumpe: AUS"
 
                 # LCD aktualisieren
-                lcd.cursor_pos = (2, 0)
-                lcd.write_string(f"Soil: {moisture}%      ")
-                lcd.cursor_pos = (3, 0)
-                lcd.write_string(f"{pump_status}       ")
+                self.lcd.cursor_pos = (2, 0)
+                self.lcd.write_string(f"Soil: {moisture}%      ")
+                self.lcd.cursor_pos = (3, 0)
+                self.lcd.write_string(f"{pump_status}       ")
 
         except ValueError:
             print("Ungültige Daten vom Arduino empfangen.")
         except Exception as error:
             print(f"Fehler beim Lesen der Bodenfeuchtigkeit: {error}")
 
-    while True:
-        read_dht22_data()
-        read_soil_moisture()
-        time.sleep(2)  # Wartezeit von 2 Sekunden zwischen den Messungen
+    def cleanup(self):
+        """
+        Schließt und bereinigt alle geöffneten Ressourcen.
+        """
+        try:
+            self.dht_device.exit()
+        except:
+            pass
+        try:
+            self.arduino_serial.close()
+        except:
+            pass
+        try:
+            GPIO.cleanup()
+        except:
+            pass
+        try:
+            self.lcd.clear()
+        except:
+            pass
 
-except KeyboardInterrupt:
-    print("Programm beendet.")
+def main():
+    controller = GreenhouseController()
+    try:
+        while True:
+            controller.read_dht22_data()
+            controller.read_soil_moisture()
+            time.sleep(2)
+    except KeyboardInterrupt:
+        print("Programm beendet.")
+    finally:
+        controller.cleanup()
 
-finally:
-    dht_device.exit()
-    arduino_serial.close()
-    GPIO.cleanup()
-    lcd.clear()
+if __name__ == "__main__":
+    main()
