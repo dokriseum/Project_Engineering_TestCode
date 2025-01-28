@@ -58,7 +58,7 @@ def control_devices(temp, humidity, soil_moisture):
 try:
     while True:
         # Temperatur- und Feuchtigkeitsmessung
-        humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
+        humidity, temperature = adafruit_dht.read_retry(DHT_SENSOR, DHT_PIN)
 
         # Bodenfeuchtigkeitsmessung
         soil_moisture = read_soil_moisture()
